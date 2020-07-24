@@ -3,26 +3,34 @@ const bodyParser = require("body-parser");
 const mongo = require("mongoose");
 const { graphqlHTTP } = require("express-graphql");
 const cors = require("cors");
+const { ApolloServer } = require("apollo-server-express");
+const http = require("http");
+
 const schema = require("./schema/schema");
 
+const PORT = 3000;
 const app = express();
+app.use(cors());
+app.use(bodyParser.json());
+
+const server = new ApolloServer({
+  schema,
+});
+server.applyMiddleware({ app });
+
+const httpServer = http.createServer(app);
+server.installSubscriptionHandlers(httpServer);
 
 mongo.connect("mongodb://localhost:27017/chat-app", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
 
-app.use(cors());
-app.use(bodyParser.json());
-
-app.use(
-  "/graphql",
-  graphqlHTTP({
-    schema,
-    graphiql: true,
-  })
-);
-
-app.listen(3000, () => {
-  console.log("Listening on port 3000");
+httpServer.listen(PORT, () => {
+  console.log(
+    `🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`
+  );
+  console.log(
+    `🚀 Subscriptions ready at ws://localhost:${PORT}${server.subscriptionsPath}`
+  );
 });

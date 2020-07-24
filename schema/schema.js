@@ -1,9 +1,12 @@
 const graphql = require("graphql");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { PubSub } = require("apollo-server-express");
 
 const User = require("../models/user");
 const Message = require("../models/message");
+
+const pubsub = new PubSub();
 
 const {
   GraphQLObjectType,
@@ -34,7 +37,6 @@ const MessageType = new GraphQLObjectType({
       type: UserType,
       resolve: async (parent, args) => {
         let user = await User.findById(parent.usersId);
-        if (!user) throw new Error("Error");
         return user;
       },
     },
@@ -58,13 +60,32 @@ const UserType = new GraphQLObjectType({
     },
     messages: {
       type: new GraphQLList(MessageType),
-      resolve(parent, args) {
-        return Message.find({
+      resolve: async (parent, args) => {
+        const messages = await Message.find({
           usersId: parent.id,
         });
+
+        return messages;
       },
     },
   }),
+});
+
+const NEW_MESSAGE = "NEW_MESSAGE";
+const NEW_USER = "NEW_USER";
+
+const SubscriptionType = new GraphQLObjectType({
+  name: "Subscription",
+  fields: {
+    newMessage: {
+      type: MessageType,
+      subscribe: () => pubsub.asyncIterator([NEW_MESSAGE]),
+    },
+    newUser: {
+      type: UserType,
+      subscribe: () => pubsub.asyncIterator([NEW_USER]),
+    },
+  },
 });
 
 const RootQuery = new GraphQLObjectType({
@@ -77,7 +98,7 @@ const RootQuery = new GraphQLObjectType({
           type: GraphQLID,
         },
       },
-      resolve(parent, args) {
+      resolve: async (parent, args) => {
         return Message.findById(args.id);
       },
     },
@@ -102,8 +123,6 @@ const RootQuery = new GraphQLObjectType({
           { _id: args.id },
           { username: args.username },
         ]);
-        // if (args.id) return User.findById(args.id);
-        // else return User.findOne({ username: args.username });
       },
     },
     users: {
@@ -168,7 +187,9 @@ const Mutation = new GraphQLObjectType({
             }
           );
 
-          user.save();
+          const newUser = user.save();
+
+          pubsub.publish(NEW_USER, { newUser: newUser });
 
           const token = jwt.sign({ id: user._id }, "mysecret");
 
@@ -236,8 +257,33 @@ const Mutation = new GraphQLObjectType({
           time: args.time,
           usersId: args.usersId,
         });
+        const newMessage = message.save();
 
-        return message.save();
+        pubsub.publish(NEW_MESSAGE, { newMessage: newMessage });
+        return newMessage;
+      },
+    },
+    deleteMessage: {
+      type: MessageType,
+      args: {
+        token: { type: new GraphQLNonNull(GraphQLString) },
+        messageId: { type: new GraphQLNonNull(GraphQLString) },
+      },
+      resolve: async (parent, args) => {
+        const decoded = jwt.verify(args.token, "mysecret");
+        const user = await User.findOne({ _id: decoded.id });
+
+        if (!user.userType === 2) {
+          throw new Error("Você não tem permissão para deletar uma mensagem");
+        }
+
+        const removedMessage = Message.findByIdAndDelete(args.messageId);
+
+        if (!removedMessage) {
+          throw new Error("Erro ao deletar mensagem.");
+        }
+
+        return removedMessage;
       },
     },
   },
@@ -246,4 +292,5 @@ const Mutation = new GraphQLObjectType({
 module.exports = new GraphQLSchema({
   query: RootQuery,
   mutation: Mutation,
+  subscription: SubscriptionType,
 });

@@ -2,11 +2,12 @@ const mongo = require("mongoose");
 
 const Schema = mongo.Schema;
 
-const messageSchema = new Schema({
-  text: String,
-  date: String,
-  time: String,
-  usersId: String,
-});
+const messageSchema = new Schema(
+  {
+    text: String,
+    usersId: String,
+  },
+  { timestamps: { currentTime: () => Math.floor(Date.now() / 1000) } }
+);
 
 module.exports = mongo.model("Message", messageSchema);

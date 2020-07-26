@@ -28,10 +28,16 @@ export const MessageType = new GraphQLObjectType({
     usersId: {
       type: GraphQLID,
     },
+    usersUsername: {
+      type: GraphQLString,
+    },
     users: {
       type: UserType,
-      resolve: async (parent, args) => {
-        let user = await User.findById(parent.usersId);
+      resolve: (parent, args) => {
+        let user = User.findOne().or(
+          { _id: parent.usersId },
+          { username: parent.usersUsername }
+        );
         return user;
       },
     },

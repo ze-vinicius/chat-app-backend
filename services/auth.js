@@ -4,7 +4,7 @@ import User from "../models/user";
 export const validateToken = async (token) => {
   try {
     const decoded = jwt.verify(token, "mysecret");
-    const user = await User.findOne({ _id: decoded.id });
+    const user = await User.findById(decoded.id);
 
     if (!user) {
       throw new Error("Token inválido");

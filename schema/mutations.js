@@ -58,22 +58,17 @@ const MutationType = new GraphQLObjectType({
 
           const hashedPassword = await bcryptjs.hash(password, 10);
 
-          let user = new User(
-            {
-              username,
-              password: hashedPassword,
-              userType,
-            },
-            (err) => {
-              if (err) throw err;
-            }
-          );
+          let user = new User({
+            username,
+            password: hashedPassword,
+            userType,
+          });
 
-          const newUser = user.save();
+          const newUser = await user.save();
 
           context.pubsub.publish(NEW_USER, { newUser: newUser });
 
-          const token = jwt.sign({ id: user._id }, "mysecret");
+          const token = jwt.sign({ id: newUser._id }, "mysecret");
 
           return { token, password: null, ...user._doc };
         } catch (err) {
@@ -99,14 +94,13 @@ const MutationType = new GraphQLObjectType({
             throw new Error("Username incorreto");
           }
 
-          const comparePassword = bcryptjs.compare(
+          const comparePassword = await bcryptjs.compare(
             password,
             existingUser.password
           );
 
           if (comparePassword) {
             const token = jwt.sign({ id: existingUser._id }, "mysecret");
-
             return { token, password: null, ...existingUser._doc };
           } else {
             throw new Error("Senha incorreta");
@@ -122,13 +116,18 @@ const MutationType = new GraphQLObjectType({
         try {
           const user = await validateToken(context.token);
 
-          const updatedUser = User.findByIdAndUpdate(user._id, {
-            lastseen: Math.floor(Date.now() / 1000),
-          });
+          const updatedUser = User.findByIdAndUpdate(
+            user._id,
+            {
+              lastseen: Math.floor(Date.now() / 1000),
+            },
+            { useFindAndModify: false }
+          );
 
           context.pubsub.publish(ADD_ONLINE_USER, {
             addOnlineUser: updatedUser,
           });
+
           return updatedUser;
         } catch (error) {
           throw error;
@@ -150,6 +149,7 @@ const MutationType = new GraphQLObjectType({
             let message = new Message({
               text: args.text,
               usersId: user._id,
+              usersUsername: user.username,
             });
 
             const newMessage = await message.save();

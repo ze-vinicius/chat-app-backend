@@ -6,6 +6,7 @@ const messageSchema = new Schema(
   {
     text: String,
     usersId: String,
+    usersUsername: String,
   },
   { timestamps: { currentTime: () => Math.floor(Date.now() / 1000) } }
 );

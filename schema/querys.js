@@ -33,8 +33,35 @@ const RootQueryType = new GraphQLObjectType({
     },
     messages: {
       type: new GraphQLList(MessageType),
-      resolve(parent, args) {
-        return Message.find({});
+      args: {
+        sort: { type: GraphQLString },
+        username: { type: GraphQLString },
+        createdAt: { type: GraphQLString },
+      },
+      resolve: async (parent, { sort, username, createdAt }) => {
+        let query = Message.find({}).sort({
+          createdAt: sort ? sort : "asc",
+        });
+
+        if (username) {
+          query = query.where({ usersUsername: username });
+        }
+
+        if (createdAt) {
+          const dt = new Date(`${createdAt}:00:00`);
+
+          const dateFilter = new Date(dt);
+          const dateLimit = new Date(dt.setDate(dt.getDate() + 1));
+
+          console.log(Math.floor(dateFilter / 1000));
+          query = query.where({
+            createdAt: {
+              $gte: Math.floor(dateFilter / 1000),
+              $lte: Math.floor(dateLimit / 1000),
+            },
+          });
+        }
+        return query;
       },
     },
     user: {
@@ -58,7 +85,9 @@ const RootQueryType = new GraphQLObjectType({
       type: UserType,
       resolve: async (parent, args, context) => {
         try {
+          if (!context.token) throw new Error("Token não foi enviado");
           const user = await validateToken(context.token);
+
           return user;
         } catch (err) {
           throw err;

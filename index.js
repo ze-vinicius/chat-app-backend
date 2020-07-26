@@ -31,17 +31,17 @@ const server = new ApolloServer({
   subscriptions: {
     onConnect: (connectionParams, webSocket, context) => {
       const userPromise = new Promise((resolve, reject) => {
-        if (connectionParams.authorization) {
-          jwt.verify(
-            connectionParams.authorization,
-            "mysecret",
-            (err, decoded) => {
-              if (err) {
-                reject(new Error("Token inválido"));
-              }
-              resolve(User.findById(decoded.id));
+        if (connectionParams.authToken) {
+          jwt.verify(connectionParams.authToken, "mysecret", (err, decoded) => {
+            if (err) {
+              reject(new Error("Token inválido"));
             }
-          );
+            resolve(
+              User.findOne({
+                _id: decoded.id,
+              })
+            );
+          });
         } else {
           reject(new Error("Não recebemos o token de autenticação"));
         }

@@ -44,7 +44,7 @@ const MutationType = new GraphQLObjectType({
           type: new GraphQLNonNull(GraphQLString),
         },
         userType: {
-          type: new GraphQLNonNull(GraphQLInt),
+          type: new GraphQLNonNull(GraphQLString),
         },
       },
       resolve: async (parent, args, context) => {

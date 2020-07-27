@@ -49,11 +49,8 @@ const RootQueryType = new GraphQLObjectType({
 
         if (createdAt) {
           const dt = new Date(`${createdAt}:00:00`);
-          const dateLimit = new Date(dt);
-          const dateFilter = new Date(dt.setDate(dt.getDate() - 1));
-
-          console.log(dateFilter / 1000);
-          console.log(dateLimit / 1000);
+          const dateFilter = new Date(dt);
+          const dateLimit = new Date(dt.setDate(dt.getDate() + 1));
 
           query = query.where({
             createdAt: {

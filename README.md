@@ -8,7 +8,7 @@ os usuários do tipo administrador podem, além de enviar e receber mensagens, f
 - [backend](https://github.com/jbsaraiva/chat-app-backend)
 
 # GraphQL Schema
-```
+```graphql
 schema {
   query: RootQueryType
   mutation: Mutation
@@ -67,14 +67,14 @@ type Subscription {
 
 # Instalação
 
-```
+```bash
 > npm install
 ```
 
 # Inicialização
 Precisa ter o mongodb rodando na máquina.
 
-```
+```bash
 > npm start
 ```
 
@@ -91,7 +91,7 @@ Precisa ter o mongodb rodando na máquina.
 
 # Author
 
-José Vinícius - [josevsaraiva@gmail.com](josevsaraiva@gmail.com)
+José Vinícius - [josevsaraiva@gmail.com](josevsaraiva@gmail.com) 
 
 # Principais tecnologias utilizadas
 - Express 

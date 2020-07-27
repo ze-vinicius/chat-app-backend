@@ -62,7 +62,6 @@ type Subscription {
   updateChat: updatechat
   addOnlineUser: users
   newUser: users
-  profilesUpdate: [profile]
 }
 ```
 
@@ -79,8 +78,22 @@ Precisa ter o mongodb rodando na máquina.
 > npm start
 ```
 
+# Requisitos 
+- [x] Cadastrar usuários.
+- [x] Salvar novas mensagens no banco de dados.
+- [x] Enviar atualizações para o frontend quando uma mensagem for adicionada ou excluída.
+- [x] Enviar atualização de estado do usuário para os outros usuários.
+- [x] Autenticação com jwt.
+- [x] Filtrar mensagens.
+
+# Próximas etapas
+- [ ] Adicionar filtro à subscription de novas mensagens para que o usuário que filtrar no frontend, receba também as atualizações filtradas.
 
 # Author
 
 José Vinícius - [josevsaraiva@gmail.com](josevsaraiva@gmail.com)
 
+# Principais tecnologias utilizadas
+- Express 
+- Graphql
+- Mongodb
